@@ -1,0 +1,18 @@
+# ─── Python ───
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# ─── 环境变量 / 密钥（不要把真实 API Key 传上去）───
+.env
+
+# ─── IDE ───
+.idea/
+.vscode/
+
+# ─── 输出目录 ───
+output/
+
+# ─── 测试生成文件（运行 test_amap.py 时会重新生成并内嵌密钥）───
+test_amap.html

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>山河游记</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+/* Progress overlay */
+#progress-overlay{display:none;position:fixed;inset:0;z-index:999;background:rgba(250,247,255,.92);backdrop-filter:blur(8px);flex-direction:column;align-items:center;justify-content:center}
+#progress-overlay.show{display:flex}
+.prog-scene{text-align:center}
+.prog-emoji{font-size:3.5em;transition:all .4s ease}
+.prog-text{font-family:'Noto Serif SC',serif;font-size:1.3em;background:linear-gradient(135deg,var(--pink),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin:16px 0 6px;transition:all .3s ease}
+.prog-hint{font-size:.84em;color:var(--muted);max-width:300px;transition:all .3s ease}
+.prog-dots{display:flex;gap:8px;margin-top:28px}
+.prog-dot{width:10px;height:10px;border-radius:50%;background:var(--line);transition:all .4s ease}
+.prog-dot.done{background:var(--pink);transform:scale(1.2)}
+.prog-dot.active{background:var(--pink);animation:bounce .6s ease-in-out infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+</style>
+</head>
+<body>
+
+<div id="progress-overlay">
+  <div class="prog-scene">
+    <div class="prog-emoji" id="prog-emoji">🧳</div>
+    <div class="prog-text" id="prog-text">准备出发</div>
+    <div class="prog-hint" id="prog-hint">正在理解你的旅行需求</div>
+    <div class="prog-dots" id="prog-dots">
+      <span class="prog-dot active"></span><span class="prog-dot"></span><span class="prog-dot"></span><span class="prog-dot"></span><span class="prog-dot"></span>
+    </div>
+  </div>
+</div>
+
+<div id="input-area">
+  <input id="query-input" type="text" placeholder="想去哪里？几天？喜欢什么？例如：想去安阳玩3天，喜欢人文历史">
+  <button id="gen-btn" onclick="startGenerate()">✦ 生成攻略</button>
+</div>
+
+<nav class="nav-bar" id="navbar"></nav>
+<div id="pages-container"></div>
+<div class="page-dots" id="dots"></div>
+
+<script>
+window._AMapSecurityConfig={securityJsCode:"YOUR_AMAP_SECRET"};  // TODO: 请填写你自己的高德安全密钥
+</script>
+<script src="https://webapi.amap.com/maps?v=2.0&key=YOUR_AMAP_JS_API_KEY&plugin=AMap.Polyline,AMap.Marker"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>
