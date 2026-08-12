@@ -8,25 +8,24 @@
 
 ```bash
 # 1. 填 API Key
-#    编辑 src/config.py，把 DIFY_API_KEY 填上
+#    编辑 config.py，填上 Dify / 高德的 API Key
 
 # 2. 安装依赖
 pip install httpx pydantic
 
 # 3. 运行
-python src/main.py "想去安阳玩3天，喜欢人文历史"
+python main.py "想去安阳玩3天，喜欢人文历史"
 ```
 
 ### 方式二：直连 LLM（不依赖 Dify）
 
 ```bash
-python src/main.py "云南7天" --direct
+python main.py "云南7天" --direct
 ```
 
 ## 项目结构
 
 ```
-src/
 ├── main.py                  # CLI 入口
 ├── config.py                # 配置文件（填 API Key）
 ├── orchestrator.py          # Dify 模式编排器
@@ -60,6 +59,9 @@ src/
 - httpx, pydantic
 - Dify 0.15+ (虚拟机部署) 或 DeepSeek API
 
-## 设计文档
+## 📚 设计文档
 
-完整架构设计见 Obsidian 知识库：`05_项目实战/中国旅游攻略Agent/`
+- [项目知识库总览](docs/_index.md) — 架构、模块、流程、提示词导航
+- [架构总览](docs/01-架构总览.md) — 六 Agent 协作拓扑 · 双模输出架构
+- [项目全记录](docs/项目全记录.md) — 从设计到落地的完整历程
+- [源码索引](docs/源码索引.md) — 代码文件 ↔ 设计文档对照
