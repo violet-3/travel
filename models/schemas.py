@@ -70,6 +70,7 @@ class PhotoSpot(BaseModel):
 
 class Spot(BaseModel):
     name: str = ""
+    city: str = ""                                          # 所属城市（富化层按城市搜 POI）
     tier: int = 1
     type: str = ""
     duration: str = ""
@@ -80,6 +81,7 @@ class Spot(BaseModel):
     tips: str = ""
     nearby_food: list[str] = Field(default_factory=list)
     coordinate: Optional[list[float]] = None
+    photo: str = ""                                         # 实景图 URL（富化层回填，/static/photos/...）
 
 
 class CultureData(BaseModel):

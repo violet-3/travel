@@ -42,10 +42,7 @@
 <div id="pages-container"></div>
 <div class="page-dots" id="dots"></div>
 
-<script>
-window._AMapSecurityConfig={securityJsCode:"YOUR_AMAP_SECRET"};  // TODO: 请填写你自己的高德安全密钥
-</script>
-<script src="https://webapi.amap.com/maps?v=2.0&key=YOUR_AMAP_JS_API_KEY&plugin=AMap.Polyline,AMap.Marker"></script>
+<!-- 高德 JS SDK 由 app.js 懒加载: Key/安全密钥从后端 /api/config 获取，只需在 .env 里配置 -->
 <script src="/js/app.js"></script>
 </body>
 </html>

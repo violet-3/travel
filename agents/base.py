@@ -65,21 +65,15 @@ class BaseAgent(ABC, Generic[I, O]):
         """
         执行 Agent 的核心流程:
         input → prompt → LLM → parse → output
+
+        所有 Agent 的输出都是 JSON（对象或数组），统一走 chat_structured，
+        由 llm_client + json_utils 做容错解析（剥 markdown 代码块、修截断等）。
         """
         user_prompt = self.build_user_prompt(input_data)
 
-        # 结构化 Agent 用 chat_structured (返回 JSON)
-        # 文本 Agent 用 chat (返回文本)
-        if hasattr(self, "output_schema"):
-            raw = await self.llm.chat_structured(
-                system_prompt=self.system_prompt,
-                user_prompt=user_prompt,
-            )
-        else:
-            raw_text = await self.llm.chat(
-                system_prompt=self.system_prompt,
-                user_prompt=user_prompt,
-            )
-            raw = raw_text
+        raw = await self.llm.chat_structured(
+            system_prompt=self.system_prompt,
+            user_prompt=user_prompt,
+        )
 
         return self.parse_output(raw)

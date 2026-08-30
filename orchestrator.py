@@ -19,6 +19,7 @@ from typing import Callable, Optional
 from models.schemas import TravelIntent, RoutePlan, Spot, CultureData, TravelGuide
 from agents.guide_generator import GuideGenerator
 from tools.dify_client import DifyClient
+from tools.enrich import enrich_guide
 from tools.weather import get_weather, clothing_advice
 from config import default_config
 
@@ -78,67 +79,20 @@ class TravelOrchestrator:
         self._notify(on_progress, 88, "weather", "正在查询天气...")
         weather_data, clothing_tip, amap_ready = await self._fetch_weather(route.cities)
 
+        # Step 5.5: 富化 (POI 坐标 + 实景图片，失败不阻塞主流程)
+        self._notify(on_progress, 89, "enrich", "正在匹配位置与实景图片...")
+        try:
+            await enrich_guide(spots, cultures)
+        except Exception:
+            pass
+
         # Step 6: 编译
         self._notify(on_progress, 90, "compile", "正在生成攻略...")
-        guide = self.compiler.compile(route, spots, cultures)
+        guide = self.compiler.compile(route, spots, cultures, intent=intent)
         guide.weather = weather_data
         guide.clothing_tip = clothing_tip
         guide.amap_ready = amap_ready
         self._notify(on_progress, 100, "done", "攻略生成完成！")
-        return guide
-
-        async def gen_city(city: str) -> list | dict | None:
-            """为单个城市生成内容，输出量小，不易被截断"""
-            try:
-                result = await self.dify.call_content_generator(
-                    route_json=json.dumps(
-                        {
-                            **route_dict,
-                            "cities": [city],
-                            "daily_plan": [
-                                d for d in route_dict.get("daily_plan", [])
-                                if d.get("city") == city
-                            ],
-                        },
-                        ensure_ascii=False,
-                    ),
-                    preferences=json.dumps(
-                        intent.get("preferences", []), ensure_ascii=False
-                    ),
-                )
-                return result if isinstance(result, list) else [result]
-            except Exception:
-                return None
-
-        # 并行发起所有城市的请求
-        results = await asyncio.gather(*[gen_city(c) for c in route.cities])
-
-        # 合并结果，跳过失败的城市
-        content_list = []
-        for r in results:
-            if r:
-                content_list.extend(r if isinstance(r, list) else [r])
-
-        spots, cultures = self._split_content(content_list)
-        self._notify(on_progress, 85, "content",
-                     f"找到 {len(spots)} 个景点, {len(cultures)} 个城市文化")
-
-        # ─── Step 3.5: 存入 Obsidian 知识库 ───
-        self._notify(on_progress, 87, "save", "正在充实知识库...")
-        self._save_to_obsidian(route.cities, spots, cultures)
-
-        # ─── Step 3.6: 天气查询 ───
-        self._notify(on_progress, 88, "weather", "正在查询天气...")
-        weather_data, clothing_tip, amap_ready = await self._fetch_weather(route.cities)
-
-        # ─── Step 4: 编译 Markdown (纯 Python) ───
-        self._notify(on_progress, 90, "compile", "正在生成攻略...")
-        guide = self.compiler.compile(route, spots, cultures)
-        guide.weather = weather_data
-        guide.clothing_tip = clothing_tip
-        guide.amap_ready = amap_ready
-        self._notify(on_progress, 100, "done", "攻略生成完成！")
-
         return guide
 
     def _fill_defaults(self, raw: dict) -> dict:
@@ -167,10 +121,13 @@ class TravelOrchestrator:
         cultures = []
         for item in content_list:
             if isinstance(item, dict):
+                city = item.get("city", "")
                 if "spots" in item:
                     for s in item["spots"]:
                         try:
-                            spots.append(Spot(**s))
+                            spot = Spot(**s)
+                            spot.city = city          # 景点归属城市，富化时按城市搜 POI
+                            spots.append(spot)
                         except Exception:
                             pass
                 if "culture" in item:
@@ -196,22 +153,25 @@ class TravelOrchestrator:
         if not amap_ready:
             return [], "", False
 
-        for city in cities:
+        async def _one(city: str) -> dict:
             try:
-                w = await get_weather(city)
-                weather_list.append(w)
-                if w.get("status") == "ok" and w.get("forecast"):
-                    all_forecasts.extend(w["forecast"])
+                return await get_weather(city)
             except Exception:
-                weather_list.append({"status": "error", "city": city})
+                return {"status": "error", "city": city}
+
+        weather_list = list(await asyncio.gather(*[_one(c) for c in cities]))
+        for w in weather_list:
+            if w.get("status") == "ok" and w.get("forecast"):
+                all_forecasts.extend(w["forecast"])
 
         clothing = clothing_advice(all_forecasts) if all_forecasts else ""
         return weather_list, clothing, amap_ready
 
     def _save_to_obsidian(self, cities: list[str], spots: list, cultures: list):
-        """把 Dify 内容生成器的输出存入 Obsidian 知识库"""
-        # Obsidian 仓库根目录
-        obsidian_base = default_config.obsidian_kb_dir or r"G:\AI_agent_space\AI-Agent-Space\_知识库\旅游数据"
+        """把 Dify 内容生成器的输出存入 Obsidian 知识库（未配置目录则跳过）"""
+        obsidian_base = default_config.obsidian_kb_dir
+        if not obsidian_base:
+            return
         os.makedirs(obsidian_base, exist_ok=True)
 
         today = datetime.now().strftime("%Y-%m-%d")

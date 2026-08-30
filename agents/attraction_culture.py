@@ -6,8 +6,11 @@
 """
 
 import json
+from datetime import datetime
+
 from agents.base import BaseAgent
 from models.schemas import RoutePlan, Spot, CultureData
+from tools.json_utils import parse_json
 
 
 class AttractionRecommenderAgent(BaseAgent[RoutePlan, list[Spot]]):
@@ -28,6 +31,7 @@ class AttractionRecommenderAgent(BaseAgent[RoutePlan, list[Spot]]):
 [
   {
     "name": "洱海",
+    "city": "大理",
     "tier": 1,
     "type": "自然风光",
     "duration": "0.5天",
@@ -45,6 +49,7 @@ class AttractionRecommenderAgent(BaseAgent[RoutePlan, list[Spot]]):
 
 ## 原则
 - 每个城市推荐 6~10 个景点
+- 每个景点必须带 city 字段（所属城市），用于后续地图定位
 - 热门景点必须准确（门票价格、开放时间）
 - 每个景点给 1~3 个拍照机位
 - 不要编造不存在的景点
@@ -59,12 +64,12 @@ class AttractionRecommenderAgent(BaseAgent[RoutePlan, list[Spot]]):
 旅行天数: {len(route.daily_plan)}天
 旅行节奏: 每天{len(route.daily_plan[0].__dict__) if route.daily_plan else '3'}个时段
 
-为每个城市输出 tier1/tier2/tier3 三层景点推荐。
+为每个城市输出 tier1/tier2/tier3 三层景点推荐（每个景点带 city 字段）。
 输出 JSON 数组:"""
 
     def parse_output(self, raw: dict | str | list) -> list[Spot]:
         if isinstance(raw, str):
-            raw = json.loads(raw)
+            raw = parse_json(raw)
         if isinstance(raw, dict):
             raw = [raw]
         return [Spot(**item) for item in raw]
@@ -147,14 +152,14 @@ class CultureEngineAgent(BaseAgent[RoutePlan, list[CultureData]]):
         return f"""请为以下城市输出完整的风土人情指南:
 
 途经城市: {', '.join(route.cities)}
-出行月份: 7月
+出行月份: {datetime.now().month}月
 
 请覆盖: 美食地图、民俗文化、节庆活动、历史典故、礼仪禁忌、生活方式。
 输出 JSON 数组:"""
 
     def parse_output(self, raw: dict | str | list) -> list[CultureData]:
         if isinstance(raw, str):
-            raw = json.loads(raw)
+            raw = parse_json(raw)
         if isinstance(raw, dict):
             raw = [raw]
         return [CultureData(**item) for item in raw]

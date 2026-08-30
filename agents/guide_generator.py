@@ -6,7 +6,7 @@
 2. 可直接写入 Obsidian
 """
 
-from models.schemas import RoutePlan, Spot, CultureData, BudgetBreakdown, TravelGuide
+from models.schemas import RoutePlan, Spot, CultureData, BudgetBreakdown, TravelGuide, TravelIntent
 
 
 class GuideGenerator:
@@ -23,16 +23,31 @@ class GuideGenerator:
         route: RoutePlan,
         spots: list[Spot],
         cultures: list[CultureData],
+        intent: "TravelIntent | dict | None" = None,
     ) -> TravelGuide:
-        """编译所有数据为最终攻略"""
+        """编译所有数据为最终攻略
+
+        intent 可传 TravelIntent 实例（直连模式）或 dict（Dify 模式），
+        用于把出发地/预算级别带进最终攻略。
+        """
+
+        def _from_intent(key: str, default: str = "") -> str:
+            if intent is None:
+                return default
+            if isinstance(intent, dict):
+                return intent.get(key) or default
+            return getattr(intent, key, default) or default
+
         budget = self._calculate_budget(route)
+        days = len(route.daily_plan)
 
         return TravelGuide(
             title=f"《{route.route_name}》",
-            subtitle=f"{' → '.join(route.cities)} · {len(route.daily_plan)}天{len(route.daily_plan)-1}晚",
+            subtitle=f"{' → '.join(route.cities)} · {days}天{max(days - 1, 0)}晚",
             destinations=route.cities,
-            days=len(route.daily_plan),
-            budget_level="中等",
+            days=days,
+            departure_city=_from_intent("departure_city"),
+            budget_level=_from_intent("budget_level", "中等"),
             route=route,
             spots=spots,
             cultures=cultures,

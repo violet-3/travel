@@ -9,9 +9,11 @@
 - 等等
 """
 
-import json
+from datetime import datetime
+
 from agents.base import BaseAgent
 from models.schemas import TravelIntent
+from tools.json_utils import parse_json
 
 
 class IntentParserAgent(BaseAgent[str, TravelIntent]):
@@ -77,14 +79,15 @@ class IntentParserAgent(BaseAgent[str, TravelIntent]):
 只输出一个 JSON 对象。"""
 
     def build_user_prompt(self, user_input: str) -> str:
+        now = datetime.now()
         return f"""请分析以下用户的旅行需求，提取结构化信息:
 
 用户输入: {user_input}
 
-当前日期: 2026年7月
+当前日期: {now.year}年{now.month}月{now.day}日
 请直接输出 JSON:"""
 
     def parse_output(self, raw: dict | str) -> TravelIntent:
         if isinstance(raw, str):
-            raw = json.loads(raw)
+            raw = parse_json(raw)
         return TravelIntent(**raw)

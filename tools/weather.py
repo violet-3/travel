@@ -1,36 +1,25 @@
 """
 天气服务 · 高德天气 API (支持安全密钥签名)
 文档: https://lbs.amap.com/api/webservice/guide/api/weatherinfo
+
+注意: extensions=all 只返回预报，不含实况(lives)，因此本服务只输出 forecast。
 """
 
-import hashlib
 import httpx
+
 from config import default_config
-
-
-def _sign(params: dict) -> str:
-    """高德安全密钥签名: MD5(排序后的参数拼串 + secret)"""
-    secret = default_config.amap.secret
-    if not secret:
-        return ""
-    # 按 key 字母排序，拼成 key=value&key=value...&secret
-    sorted_items = sorted(params.items())
-    raw = "&".join(f"{k}={v}" for k, v in sorted_items) + secret
-    return hashlib.md5(raw.encode()).hexdigest()
+from tools.amap_utils import with_sig
 
 
 async def get_weather(city: str) -> dict:
     """获取城市天气预报 (未来4天)"""
-    key = default_config.amap.weather_key
+    cfg = default_config.amap
+    key = cfg.weather_key
     if not key:
         return {"status": "no_key", "city": city}
 
-    # 地理编码
-    params = {"key": key, "keywords": city, "subdistrict": 0}
-    sig = _sign(params)
-    if sig:
-        params["sig"] = sig
-
+    # 地理编码: 城市名 → adcode
+    params = with_sig({"keywords": city, "subdistrict": 0}, key, cfg.secret)
     async with httpx.AsyncClient(timeout=10) as c:
         geo_resp = await c.get("https://restapi.amap.com/v3/config/district", params=params)
         geo_data = geo_resp.json()
@@ -41,11 +30,7 @@ async def get_weather(city: str) -> dict:
             return {"status": "not_found", "city": city}
 
         # 天气预报
-        wp = {"key": key, "city": adcode, "extensions": "all"}
-        wsig = _sign(wp)
-        if wsig:
-            wp["sig"] = wsig
-
+        wp = with_sig({"city": adcode, "extensions": "all"}, key, cfg.secret)
         weather_resp = await c.get("https://restapi.amap.com/v3/weather/weatherInfo", params=wp)
         weather_data = weather_resp.json()
 
@@ -55,19 +40,10 @@ async def get_weather(city: str) -> dict:
     forecasts = weather_data.get("forecasts", [{}])[0]
     casts = forecasts.get("casts", [])
 
-    # 当前天气
-    live = weather_data.get("lives", [{}])[0] if weather_data.get("lives") else {}
-
     return {
         "status": "ok",
         "city": forecasts.get("city", city),
         "province": forecasts.get("province", ""),
-        "current": {
-            "weather": live.get("weather", ""),
-            "temperature": live.get("temperature", ""),
-            "wind": live.get("winddirection", "") + "风 " + live.get("windpower", "") + "级",
-            "humidity": live.get("humidity", ""),
-        } if live else None,
         "forecast": [
             {
                 "date": c.get("date", ""),
@@ -84,7 +60,7 @@ async def get_weather(city: str) -> dict:
 
 
 _week_map = {"1": "周一", "2": "周二", "3": "周三", "4": "周四",
-              "5": "周五", "6": "周六", "7": "周日"}
+             "5": "周五", "6": "周六", "7": "周日"}
 
 
 def clothing_advice(forecast: list[dict]) -> str:

@@ -143,6 +143,12 @@ body{font-family:'Noto Sans SC','Microsoft YaHei',sans-serif;background:var(--bg
 
 .footer-text{text-align:center;color:var(--muted);font-size:.74em;margin-top:40px}
 
+/* ── Lightbox (点击图片放大) ── */
+#lightbox{display:none;position:fixed;inset:0;z-index:1000;background:rgba(20,12,30,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:center;justify-content:center;cursor:zoom-out;padding:20px}
+#lightbox.show{display:flex}
+#lightbox img{max-width:94%;max-height:90%;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.spot-card img,.food-card img,.hero-banner{cursor:zoom-in}
+
 @media(max-width:640px){
   .nav-btn{padding:6px 12px;font-size:.76em;gap:3px}
   .hero-section h1{font-size:1.6em}

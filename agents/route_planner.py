@@ -15,6 +15,7 @@ import json
 from agents.base import BaseAgent
 from models.schemas import TravelIntent, RoutePlan
 from knowledge.route_templates import get_templates_for, ROUTE_TEMPLATES
+from tools.json_utils import parse_json
 
 
 class RoutePlannerAgent(BaseAgent[TravelIntent, RoutePlan]):
@@ -97,5 +98,5 @@ class RoutePlannerAgent(BaseAgent[TravelIntent, RoutePlan]):
 
     def parse_output(self, raw: dict | str) -> RoutePlan:
         if isinstance(raw, str):
-            raw = json.loads(raw)
+            raw = parse_json(raw)
         return RoutePlan(**raw)

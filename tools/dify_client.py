@@ -9,7 +9,9 @@ Dify API 格式:
 
 import json
 import httpx
+
 from config import Config, default_config
+from tools.json_utils import parse_json
 
 
 class DifyClient:
@@ -78,7 +80,7 @@ class DifyClient:
             print(f"[IntentParser] Content: {text[:100]}...")
         else:
             print("[IntentParser] WARNING: empty response")
-        return self._parse_json(text)
+        return parse_json(text)
 
     async def call_route_planner(self, intent: dict) -> dict:
         """路线规划器: 意图 JSON → 路线 JSON"""
@@ -100,7 +102,7 @@ class DifyClient:
             print(f"[RoutePlanner] Content: {text[:100]}...")
         else:
             print("[RoutePlanner] WARNING: empty response")
-        return self._parse_json(text)
+        return parse_json(text)
 
     async def call_content_generator(self, route_json: str, preferences: str = "") -> dict:
         """内容生成器: 路线 JSON → 景点 + 文化 JSON"""
@@ -118,113 +120,4 @@ class DifyClient:
             print(f"[ContentGen] Content: {text[:100]}...")
         else:
             print("[ContentGen] WARNING: empty response")
-        return self._parse_json(text)
-
-    # ─── 工具方法 ───
-    @staticmethod
-    def _fix_truncated_json(text: str) -> str:
-        """修复被截断的 JSON —— 补全缺失的字符串引号和闭合方括号/花括号
-
-        原理: 遍历字符，记录是否在字符串内以及括号栈的状态，
-        然后按 LIFO 顺序补全缺失的闭合符号。
-        """
-        text = text.rstrip().rstrip(",").rstrip()
-
-        # 第一遍: 检查字符串是否被截断（未闭合的引号）
-        in_string = False
-        escape = False
-        for ch in text:
-            if escape:
-                escape = False
-            elif ch == "\\" and in_string:
-                escape = True
-            elif ch == '"':
-                in_string = not in_string
-        if in_string:
-            text += '"'  # 补上缺失的闭合引号
-
-        # 第二遍: 检查所有括号/花括号是否闭合
-        stack = []
-        in_string = False
-        escape = False
-        for ch in text:
-            if escape:
-                escape = False
-            elif ch == "\\" and in_string:
-                escape = True
-            elif ch == '"':
-                in_string = not in_string
-            elif not in_string:
-                if ch in "{[":  # 记录开括号
-                    stack.append(ch)
-                elif ch == "}":
-                    if stack and stack[-1] == "{":
-                        stack.pop()
-                elif ch == "]":
-                    if stack and stack[-1] == "[":
-                        stack.pop()
-
-        # 按反序补全缺失的闭合符
-        closers = {"{": "}", "[": "]"}
-        for opener in reversed(stack):
-            text += closers[opener]
-
-        return text
-    @staticmethod
-    def _parse_json(text: str) -> dict | list:
-        """容错 JSON 解析 - LLM 经常输出格式不完美的 JSON"""
-        if isinstance(text, (dict, list)):
-            return text
-        if not isinstance(text, str):
-            raise ValueError(f"Expected string, got {type(text)}")
-
-        text = text.strip()
-
-        # 尝试 1: 直接解析
-        try:
-            return json.loads(text)
-        except json.JSONDecodeError:
-            pass
-
-        # 尝试 2: 提取 markdown 代码块
-        import re
-        match = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", text, re.DOTALL)
-        if match:
-            try:
-                return json.loads(match.group(1))
-            except json.JSONDecodeError:
-                pass
-
-        # 尝试 3: 找到最外层的 { } 或 [ ]
-        for start_char, end_char in [("{", "}"), ("[", "]")]:
-            start = text.find(start_char)
-            end = text.rfind(end_char)
-            if start >= 0 and end > start:
-                chunk = text[start:end + 1]
-                try:
-                    return json.loads(chunk)
-                except json.JSONDecodeError:
-                    pass
-
-        # 尝试 4: 修复常见错误 (尾部逗号, 单引号等)
-        cleaned = text
-        cleaned = re.sub(r",\s*([}\]])", r"\1", cleaned)  # 去尾部逗号
-        cleaned = re.sub(r"'", '"', cleaned)               # 单引号换双引号
-        for start_char, end_char in [("{", "}"), ("[", "]")]:
-            start = cleaned.find(start_char)
-            end = cleaned.rfind(end_char)
-            if start >= 0 and end > start:
-                try:
-                    return json.loads(cleaned[start:end + 1])
-                except json.JSONDecodeError:
-                    pass
-        # 尝试 5: 修复被截断的 JSON（补全缺失的引号和闭合括号）
-        fixed = DifyClient._fix_truncated_json(text)
-        try:
-            parsed = json.loads(fixed)
-            # 修复后至少能拿到部分数据，比完全失败好
-            return parsed
-        except json.JSONDecodeError:
-            pass
-
-        raise ValueError(f"无法解析 JSON，LLM 原始输出:\n{text[:800]}")
+        return parse_json(text)

@@ -1,0 +1,11 @@
+# ─── Web 服务 (python app.py) ───
+fastapi>=0.110
+uvicorn>=0.29
+httpx>=0.27
+pydantic>=2.7
+
+# ─── 直连 LLM 模式 (python main.py --direct) ───
+openai>=1.30
+
+# ─── 可选: 离线抓图工具 (python -m tools.image_scraper) ───
+# playwright>=1.40
