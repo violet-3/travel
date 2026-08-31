@@ -7,6 +7,7 @@ Dify API 格式:
   Body: {"inputs": {...}, "response_mode": "blocking", "user": "travel-agent"}
 """
 
+import asyncio
 import json
 import httpx
 
@@ -26,11 +27,18 @@ class DifyClient:
     def __init__(self, config: Config = default_config):
         self.cfg = config
         self.base_url = config.dify.base_url.rstrip("/")
+        self._client: httpx.AsyncClient | None = None
+
+    async def _get_client(self) -> httpx.AsyncClient:
+        """共享连接池，避免每次调用都重建 TCP 连接"""
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(timeout=httpx.Timeout(120.0))
+        return self._client
 
     # ─── 公共调用方法 ───
 
     async def _call_workflow(self, inputs: dict, api_key: str) -> dict:
-        """调用 Dify 工作流，返回 outputs dict"""
+        """调用 Dify 工作流，返回 outputs dict（网络/服务端错误自动重试一次）"""
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
@@ -41,14 +49,25 @@ class DifyClient:
             "user": "travel-agent",
         }
 
-        async with httpx.AsyncClient(timeout=120) as client:
-            resp = await client.post(
-                f"{self.base_url}/workflows/run",
-                headers=headers,
-                json=body,
-            )
-            resp.raise_for_status()
-            data = resp.json()
+        last_err: Exception | None = None
+        for attempt in (1, 2):
+            try:
+                client = await self._get_client()
+                resp = await client.post(
+                    f"{self.base_url}/workflows/run",
+                    headers=headers,
+                    json=body,
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                break
+            except (httpx.HTTPError, json.JSONDecodeError) as e:
+                last_err = e
+                if attempt == 1:
+                    print(f"[Dify] request failed ({e}), retrying once...")
+                    await asyncio.sleep(1.5)
+        else:
+            raise last_err  # type: ignore[misc]
 
         # Dify workflow API 返回格式可能是:
         # {"data": {"outputs": {"text": "..."}}}

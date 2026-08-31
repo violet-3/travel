@@ -60,7 +60,8 @@ class TravelOrchestrator:
                     preferences=json.dumps(intent.get("preferences", []), ensure_ascii=False),
                 )
                 return result if isinstance(result, list) else [result]
-            except Exception:
+            except Exception as e:
+                print(f"[ContentGen] {city} 内容生成失败: {e}")
                 return None
 
         results = await asyncio.gather(*[gen_city(c) for c in route.cities])

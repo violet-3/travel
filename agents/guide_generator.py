@@ -38,7 +38,7 @@ class GuideGenerator:
                 return intent.get(key) or default
             return getattr(intent, key, default) or default
 
-        budget = self._calculate_budget(route)
+        budget = self._calculate_budget(route, _from_intent("budget_level", "中等"))
         days = len(route.daily_plan)
 
         return TravelGuide(
@@ -199,23 +199,32 @@ class GuideGenerator:
 
         return "\n".join(md)
 
-    def _calculate_budget(self, route: RoutePlan) -> BudgetBreakdown:
-        """根据路线估算预算"""
+    # 住宿/餐饮日标准 (元/晚, 元/天)，按预算级别分档
+    _LEVEL_RATES = {
+        "经济": (120, 50),
+        "中等": (250, 80),
+        "舒适": (400, 130),
+        "豪华": (700, 220),
+    }
+
+    def _calculate_budget(self, route: RoutePlan, level: str = "中等") -> BudgetBreakdown:
+        """根据路线与预算级别估算预算"""
         days = len(route.daily_plan)
+        night_rate, food_rate = self._LEVEL_RATES.get(level, self._LEVEL_RATES["中等"])
 
         # 交通
         transport = sum(t.cost_est for t in route.transport)
         # 往返大交通估计
         transport += 800
 
-        # 住宿: 经济150/中250/高400 x晚数
-        accommodation = 250 * (days - 1)
+        # 住宿: 按预算级别 x 晚数
+        accommodation = night_rate * max(days - 1, 1)
 
         # 门票: 日均100
         tickets = 100 * days
 
-        # 餐饮: 日均80
-        food = 80 * days
+        # 餐饮: 按预算级别
+        food = food_rate * days
 
         # 其他
         other = 50 * days

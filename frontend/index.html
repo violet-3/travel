@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>山河游记</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧳</text></svg>">
+<!-- Google Fonts 非阻塞加载: 大陆访问不稳时不再卡首屏，直接用系统字体兜底 -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="/css/style.css">
 <style>
 /* Progress overlay */
@@ -12,12 +14,13 @@
 .prog-scene{text-align:center}
 .prog-emoji{font-size:3.5em;transition:all .4s ease}
 .prog-text{font-family:'Noto Serif SC',serif;font-size:1.3em;background:linear-gradient(135deg,var(--pink),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin:16px 0 6px;transition:all .3s ease}
-.prog-hint{font-size:.84em;color:var(--muted);max-width:300px;transition:all .3s ease}
-.prog-dots{display:flex;gap:8px;margin-top:28px}
-.prog-dot{width:10px;height:10px;border-radius:50%;background:var(--line);transition:all .4s ease}
-.prog-dot.done{background:var(--pink);transform:scale(1.2)}
-.prog-dot.active{background:var(--pink);animation:bounce .6s ease-in-out infinite}
-@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.prog-hint{font-size:.84em;color:var(--muted);max-width:300px;transition:all .3s ease;white-space:pre-line}
+.prog-bar{width:220px;height:8px;background:var(--line);border-radius:4px;margin-top:20px;overflow:hidden}
+.prog-bar div{height:100%;width:0;background:linear-gradient(135deg,var(--pink),var(--coral));border-radius:4px;transition:width .5s ease}
+.prog-pct{font-size:.78em;color:var(--muted);margin-top:6px}
+/* 生成失败提示条 */
+#error-bar{display:none;max-width:600px;margin:10px auto 0;padding:12px 18px;background:#fff0f3;border:1px solid #ffc9d4;border-left:4px solid var(--pink);border-radius:var(--radius-sm,14px);color:#a83a52;font-size:.86em;line-height:1.6}
+#error-bar.show{display:block}
 </style>
 </head>
 <body>
@@ -27,9 +30,8 @@
     <div class="prog-emoji" id="prog-emoji">🧳</div>
     <div class="prog-text" id="prog-text">准备出发</div>
     <div class="prog-hint" id="prog-hint">正在理解你的旅行需求</div>
-    <div class="prog-dots" id="prog-dots">
-      <span class="prog-dot active"></span><span class="prog-dot"></span><span class="prog-dot"></span><span class="prog-dot"></span><span class="prog-dot"></span>
-    </div>
+    <div class="prog-bar"><div id="prog-fill"></div></div>
+    <div class="prog-pct" id="prog-pct">0%</div>
   </div>
 </div>
 
@@ -37,6 +39,7 @@
   <input id="query-input" type="text" placeholder="想去哪里？几天？喜欢什么？例如：想去安阳玩3天，喜欢人文历史">
   <button id="gen-btn" onclick="startGenerate()">✦ 生成攻略</button>
 </div>
+<div id="error-bar"></div>
 
 <nav class="nav-bar" id="navbar"></nav>
 <div id="pages-container"></div>
