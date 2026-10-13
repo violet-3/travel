@@ -16,3 +16,6 @@ output/
 
 # ─── 测试生成文件（运行 test_amap.py 时会重新生成并内嵌密钥）───
 test_amap.html
+
+# ─── 静态图片缓存目录 ───
+static/photos/

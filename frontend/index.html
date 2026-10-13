@@ -1,51 +1,257 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>山河游记</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧳</text></svg>">
-<!-- Google Fonts 非阻塞加载: 大陆访问不稳时不再卡首屏，直接用系统字体兜底 -->
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="/css/style.css">
-<style>
-/* Progress overlay */
-#progress-overlay{display:none;position:fixed;inset:0;z-index:999;background:rgba(250,247,255,.92);backdrop-filter:blur(8px);flex-direction:column;align-items:center;justify-content:center}
-#progress-overlay.show{display:flex}
-.prog-scene{text-align:center}
-.prog-emoji{font-size:3.5em;transition:all .4s ease}
-.prog-text{font-family:'Noto Serif SC',serif;font-size:1.3em;background:linear-gradient(135deg,var(--pink),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin:16px 0 6px;transition:all .3s ease}
-.prog-hint{font-size:.84em;color:var(--muted);max-width:300px;transition:all .3s ease;white-space:pre-line}
-.prog-bar{width:220px;height:8px;background:var(--line);border-radius:4px;margin-top:20px;overflow:hidden}
-.prog-bar div{height:100%;width:0;background:linear-gradient(135deg,var(--pink),var(--coral));border-radius:4px;transition:width .5s ease}
-.prog-pct{font-size:.78em;color:var(--muted);margin-top:6px}
-/* 生成失败提示条 */
-#error-bar{display:none;max-width:600px;margin:10px auto 0;padding:12px 18px;background:#fff0f3;border:1px solid #ffc9d4;border-left:4px solid var(--pink);border-radius:var(--radius-sm,14px);color:#a83a52;font-size:.86em;line-height:1.6}
-#error-bar.show{display:block}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>山河游记 · 东方诗意旅行智能定制</title>
+  <meta name="description" content="山河游记 — 基于 AI 的诗意旅行定制引擎。一键生成包含每日动线、高德导航、摄影机位、地道食单与文化掌故的深度攻略。">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏔️</text></svg>">
+  
+  <!-- Google Fonts: Instrument Serif, Noto Serif SC, Plus Jakarta Sans, Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
-<div id="progress-overlay">
-  <div class="prog-scene">
-    <div class="prog-emoji" id="prog-emoji">🧳</div>
-    <div class="prog-text" id="prog-text">准备出发</div>
-    <div class="prog-hint" id="prog-hint">正在理解你的旅行需求</div>
-    <div class="prog-bar"><div id="prog-fill"></div></div>
-    <div class="prog-pct" id="prog-pct">0%</div>
+  <!-- ── 禅意动态背景微粒 Canvas ── -->
+  <canvas id="zen-canvas" class="zen-canvas"></canvas>
+
+  <!-- ── 鼠标悬浮柔光 Aura ── -->
+  <div id="cursor-aura" class="cursor-aura"></div>
+
+  <!-- ═══════════════════════════════════════════
+       STAGE 1: 全屏酷炫开场主屏 (Cinematic Opening Hero)
+       ═══════════════════════════════════════════ -->
+  <section id="landing-hero" class="landing-hero">
+    <!-- 空间弥散光晕 (Ambient Glowing Orbs) -->
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+    <div class="ambient-orb orb-3"></div>
+
+    <!-- 远山如黛 · 视差底纹 -->
+    <div class="mountain-parallax-wrap" id="mountain-parallax">
+      <svg class="mountain-layer layer-back" viewBox="0 0 1440 280" preserveAspectRatio="none">
+        <path d="M0,160 C240,90 420,180 680,100 C920,30 1140,130 1440,60 L1440,280 L0,280 Z" fill="url(#grad-mountain-back)"></path>
+        <defs>
+          <linearGradient id="grad-mountain-back" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#234339" stop-opacity="0.14"></stop>
+            <stop offset="100%" stop-color="#FAF8F5" stop-opacity="0"></stop>
+          </linearGradient>
+        </defs>
+      </svg>
+      <svg class="mountain-layer layer-mid" viewBox="0 0 1440 280" preserveAspectRatio="none">
+        <path d="M0,190 C300,120 520,210 780,140 C1040,70 1260,170 1440,100 L1440,280 L0,280 Z" fill="url(#grad-mountain-mid)"></path>
+        <defs>
+          <linearGradient id="grad-mountain-mid" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#366E67" stop-opacity="0.16"></stop>
+            <stop offset="100%" stop-color="#FAF8F5" stop-opacity="0"></stop>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+
+    <!-- 开场顶部极简品牌导航 -->
+    <header class="landing-top-bar">
+      <div class="bar-inner">
+        <div class="brand">
+          <svg class="brand-emblem-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8">
+            <polygon points="12 2 19 21 12 17 5 21 12 2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="brand-text">
+            <span class="brand-title">山河游记</span>
+            <span class="brand-sub">Shanhe Voyage</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="pill-btn ghost-btn magnetic-elem" onclick="copyGuideHighlights()" title="复制攻略核心摘要">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span class="label">复制摘要</span>
+          </button>
+          <button class="pill-btn ghost-btn magnetic-elem" onclick="printGuide()" title="导出为 PDF 或打印">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            <span class="label">导出 / 打印</span>
+          </button>
+          <button class="pill-btn primary-btn magnetic-elem" onclick="enterWorkspace()" title="进入功能工作台">
+            <span class="label">进入功能页 ➔</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 开场视觉中心内容 -->
+    <div class="landing-center-wrap">
+      <div class="hero-badge-wrap">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          <span class="badge-text">STILLMIND EDITION · 东方诗意旅行智能定制</span>
+        </div>
+      </div>
+
+      <h1 class="landing-heading">
+        踏遍万里山河，<span class="landing-title-accent serif-italic">心随景动</span>
+      </h1>
+      <p class="landing-subheading">
+        AI 深度编排山河动线 · 高德实时导航 · 私藏机位图鉴 · 岁月文脉食单
+      </p>
+
+      <!-- 优雅搜索控制台架构 -->
+      <div class="search-master-container">
+        <div class="prompt-box" id="prompt-box">
+          <div class="prompt-icon">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </div>
+          <input 
+            id="query-input" 
+            type="text" 
+            placeholder="想去哪里？例如：安阳玩3天，喜欢殷墟历史和太行山风光..." 
+            autocomplete="off"
+          >
+          <button class="clear-btn" id="clear-btn" onclick="clearQuery()" title="清空输入" style="display:none">✕</button>
+          
+          <button id="gen-btn" class="gen-action-btn magnetic-elem" onclick="startGenerate()">
+            <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 19 21 12 17 5 21 12 2"/>
+            </svg>
+            <span class="btn-text">生成专属攻略</span>
+          </button>
+        </div>
+
+        <!-- 内嵌式出行属性过滤器 (紧凑排列) -->
+        <div class="search-quick-filters">
+          <div class="filter-col">
+            <span class="filter-label">天数</span>
+            <div class="filter-pills" data-key="days">
+              <button class="f-pill active" data-val="3天">3天慢行</button>
+              <button class="f-pill" data-val="2天周末">2天周末</button>
+              <button class="f-pill" data-val="5天深度">5天深度</button>
+              <button class="f-pill" data-val="7天长假">7天长假</button>
+            </div>
+          </div>
+          <div class="filter-divider-v"></div>
+          <div class="filter-col">
+            <span class="filter-label">偏好</span>
+            <div class="filter-pills" data-key="theme">
+              <button class="f-pill active" data-val="人文历史">人文古迹</button>
+              <button class="f-pill" data-val="山水避世">山水避世</button>
+              <button class="f-pill" data-val="街巷寻味">街巷寻味</button>
+              <button class="f-pill" data-val="风光摄影">风光摄影</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 错误提示条 -->
+      <div id="error-bar" class="error-bar"></div>
+
+      <!-- 精选灵感快速填充 -->
+      <div class="popular-suggestions">
+        <span class="sugg-title">热门灵感：</span>
+        <div class="sugg-tags">
+          <button class="sugg-chip" onclick="applyPreset('想去安阳玩3天，喜欢殷墟甲骨文与太行山风光')">安阳 · 殷墟与太行 3日</button>
+          <button class="sugg-chip" onclick="applyPreset('想去洛阳开封4日，喜欢盛唐大宋文化和老城美食')">洛阳开封 · 两京寻古 4日</button>
+          <button class="sugg-chip" onclick="applyPreset('想去徽州黄山4日，喜欢烟雨徽派古村与云海日出')">徽州 · 烟雨宏村与黄山 4日</button>
+          <button class="sugg-chip" onclick="applyPreset('想去西安玩3天，探访兵马俑、陕历博和回民街夜市')">西安 · 古都长安人文 3日</button>
+          <button class="sugg-chip" onclick="applyPreset('想去大理丽江4日慢游，喜欢苍山洱海和白族古镇')">大理丽江 · 苍洱慢时光 4日</button>
+          <button class="sugg-chip" onclick="applyPreset('想去敦煌3日，向往莫高窟艺术与鸣沙山月牙泉星空')">敦煌 · 丝路大漠传奇 3日</button>
+        </div>
+      </div>
+
+      <!-- 🌟 开场主行动入口：展卷启程进入功能页 🌟 -->
+      <div class="landing-launch-gateway">
+        <button class="gateway-launch-btn magnetic-elem" onclick="enterWorkspace()">
+          <span class="gw-glow-track"></span>
+          <svg class="gw-icon-compass" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 19 21 12 17 5 21 12 2"/>
+          </svg>
+          <span class="gw-text">展卷启程 · 探索功能画卷</span>
+          <svg class="gw-icon-arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
+          </svg>
+        </button>
+        <div class="gateway-hint-text">点击进入包含 8 大维度的互动路线画报 · 支持高德全线一键导航</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       STAGE 2: 深度功能页工作台 (Functional Guide Workspace)
+       ═══════════════════════════════════════════ -->
+  <section id="workspace-section" class="workspace-section">
+    <!-- 悬浮毛玻璃导航条 (切换 8 个篇章 + 返回主屏入口) -->
+    <nav class="nav-bar-container" id="navbar-container">
+      <div class="nav-bar-inner">
+        <!-- 返回开场主屏按键 -->
+        <button class="nav-back-hero-btn magnetic-elem" onclick="scrollToHero()" title="返回主屏">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+          </svg>
+          <span>主屏</span>
+        </button>
+
+        <div class="nav-bar" id="navbar"></div>
+      </div>
+    </nav>
+
+    <!-- 页面主体容器 (8大篇章) -->
+    <main id="pages-container" class="pages-wrapper"></main>
+
+    <!-- 页面底部分页点 -->
+    <div class="page-dots" id="dots"></div>
+
+    <!-- 底部文化名句与署名 -->
+    <footer class="site-footer">
+      <div class="footer-divider"></div>
+      <p class="footer-quote">“凡心所向，素履以往；生如逆旅，一苇以航。”</p>
+      <p class="footer-copy">SHANHE VOYAGE · STILLMIND DESIGN SYSTEM</p>
+    </footer>
+  </section>
+
+  <!-- ── Stillmind 沉浸式流式加载遮罩 ── -->
+  <div id="progress-overlay" class="progress-overlay">
+    <div class="prog-modal">
+      <div class="zen-circle-wrap">
+        <div class="zen-pulse-ring"></div>
+        <div class="zen-pulse-ring delay-1"></div>
+        <div class="zen-pulse-ring delay-2"></div>
+        <div class="prog-symbol" id="prog-symbol">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 19 21 12 17 5 21 12 2"/>
+          </svg>
+        </div>
+      </div>
+      <div class="prog-text" id="prog-text">正在洞察旅人心愿...</div>
+      <div class="prog-hint" id="prog-hint">AI 正在为你梳理山河动线与在地风物</div>
+      
+      <div class="prog-track">
+        <div id="prog-fill" class="prog-fill"></div>
+      </div>
+      <div class="prog-pct" id="prog-pct">0%</div>
+
+      <div class="prog-steps">
+        <span class="step-dot" id="st-intent">意图解析</span>
+        <span class="step-sep">›</span>
+        <span class="step-dot" id="st-route">动线规划</span>
+        <span class="step-sep">›</span>
+        <span class="step-dot" id="st-enrich">风物考据</span>
+        <span class="step-sep">›</span>
+        <span class="step-dot" id="st-compile">编排成卷</span>
+      </div>
+    </div>
   </div>
-</div>
 
-<div id="input-area">
-  <input id="query-input" type="text" placeholder="想去哪里？几天？喜欢什么？例如：想去安阳玩3天，喜欢人文历史">
-  <button id="gen-btn" onclick="startGenerate()">✦ 生成攻略</button>
-</div>
-<div id="error-bar"></div>
+  <!-- ── 浮动提示 Toast ── -->
+  <div id="toast" class="toast"></div>
 
-<nav class="nav-bar" id="navbar"></nav>
-<div id="pages-container"></div>
-<div class="page-dots" id="dots"></div>
-
-<!-- 高德 JS SDK 由 app.js 懒加载: Key/安全密钥从后端 /api/config 获取，只需在 .env 里配置 -->
-<script src="/js/app.js"></script>
+  <!-- 高德 JS SDK 懒加载 -->
+  <script src="/js/app.js"></script>
 </body>
 </html>
