@@ -1,20 +1,20 @@
 """高德 Web 服务公共工具 · 数字签名
 
-签名算法 (官方文档 https://lbs.amap.com/api/webservice/guide/tools/validate):
-  1. 请求参数按 key 升序排序
-  2. 参数值先做 URL 编码 (UTF-8)，再拼成 key=value&key=value...
-  3. 末尾拼接私钥，整体取 MD5
+签名算法 (高德数字签名文档):
+  1. 请求参数（包含 key）按参数名升序排列
+  2. 使用原始参数值拼成 key=value&key=value...
+  3. 末尾拼接 Web 服务签名密钥，整体按 UTF-8 取 MD5
+  4. 发请求时再对参数做 URL 编码
 """
 
 import hashlib
-from urllib.parse import quote
 
 
 def amap_sign(params: dict, secret: str) -> str:
     """计算高徽数字签名，secret 为空则返回空串"""
     if not secret:
         return ""
-    items = sorted((k, quote(str(v), safe="")) for k, v in params.items())
+    items = sorted((str(k), str(v)) for k, v in params.items())
     raw = "&".join(f"{k}={v}" for k, v in items) + secret
     return hashlib.md5(raw.encode()).hexdigest()
 

@@ -1,11 +1,20 @@
+# -*- coding: utf-8 -*-
 # ─── Web 服务 (python app.py) ───
 fastapi>=0.110
+anyio>=4.0,<5.0  # shield bounded async stream cleanup from ASGI disconnect cancellation
 uvicorn>=0.29
 httpx>=0.27
-pydantic>=2.7
+pydantic>=2.7.4,<=2.12.3
+keyring>=25,<27
+Pillow>=10.0  # decode image files before admitting them to the local cache
+tzdata>=2025.2  # required by zoneinfo on Windows and minimal containers
 
-# ─── 直连 LLM 模式 (python main.py --direct) ───
-openai>=1.30
+# ─── LangChain Agent (OpenAI-compatible, Anthropic, Google GenAI) ───
+langchain>=1.0,<2.0
+langchain-openai>=1.0,<2.0
+langchain-anthropic>=1.7,<2.0
+langchain-google-genai>=4.2.7,<4.3.0
+google-genai>=1.65,<2.0
 
 # ─── 可选: 离线抓图工具 (python -m tools.image_scraper) ───
 # playwright>=1.40

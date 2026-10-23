@@ -22,15 +22,20 @@ class RoutePlannerAgent(BaseAgent[TravelIntent, RoutePlan]):
     """路线规划器: 意图 → 路线"""
 
     @property
+    def output_schema(self):
+        return RoutePlan
+
+    @property
     def system_prompt(self) -> str:
         return """你是一位拥有 15 年经验的中国旅游路线规划师。你对中国各省市的地理位置、交通网络、气候特征、景区特色了如指掌。
 
 ## 工作流程
 1. 分析用户的意图（目的地、天数、偏好、节奏）
 2. 从经典路线模板库中匹配，生成行程骨架
-3. 根据用户偏好调整：喜欢自然风光的加户外景点，喜欢美食的加食街
-4. 控制每日项目数量：特种兵4-6项，不紧不慢3-4项，轻松2-3项
-5. 标注需要预约的项目和高原/安全提醒
+3. 严格保留同行人数、日期、预算口径与硬约束；硬约束优先于一般兴趣
+4. 根据用户偏好调整：喜欢自然风光的加户外景点，喜欢美食的加食街
+5. 控制每日项目数量：特种兵4-6项，不紧不慢3-4项，轻松2-3项
+6. 标注需要预约的项目和高原/安全提醒
 
 ## 地域知识要点
 - 云南: 昆明(春城)→大理(洱海/古城)→丽江(古城/雪山)→香格里拉(藏族文化/高原)
@@ -44,7 +49,8 @@ class RoutePlannerAgent(BaseAgent[TravelIntent, RoutePlan]):
 - 省内城市间优先高铁/动车（200-350km/h）
 - 山区用大巴（如丽江→香格里拉）
 - 超过800km考虑飞机
-- 标注每段交通耗时和预估费用
+- 每个实际跨城切换都要有对应交通段；出发地未给、班次或费用无法可靠估算时，把费用设为 null 并在 warnings 标为待确认，不得用0或固定往返价假装已包含
+- cost_est 是单人单段估算；不要把未知的大交通费用编成金额
 
 ## 输出格式
 {
@@ -85,18 +91,22 @@ class RoutePlannerAgent(BaseAgent[TravelIntent, RoutePlan]):
 - 目的地: {', '.join(intent.destinations)}
 - 天数: {intent.days}天
 - 预算级别: {intent.budget_level} (预算: {intent.budget or '未指定'}元)
-- 同行人: {intent.companion}
+- 预算口径: {'全体总额' if intent.budget_scope == 'total' else '人均'}
+- 同行人数: {intent.travelers}人（同行关系: {intent.companion}）
 - 节奏: {intent.pace}
 - 偏好: {', '.join(intent.preferences) if intent.preferences else '无特殊偏好'}
 - 出发城市: {intent.departure_city or '未指定'}
-- 出行日期: {intent.travel_date or '未指定'}
+- 出行日期: {intent.travel_date_note or intent.travel_date or '未指定'}
 - 特殊约束: {', '.join(intent.constraints) if intent.constraints else '无'}
+- 任何硬约束不确定能否满足时，写入 warnings 待核验，不要声称已经满足
 
 {template_hint}
 
 请输出完整的路线规划 JSON:"""
 
     def parse_output(self, raw: dict | str) -> RoutePlan:
+        if isinstance(raw, RoutePlan):
+            return raw
         if isinstance(raw, str):
             raw = parse_json(raw)
         return RoutePlan(**raw)

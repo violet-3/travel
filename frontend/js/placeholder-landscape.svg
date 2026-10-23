@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" role="img" aria-labelledby="title desc">
+  <title id="title">暂无实景图片</title>
+  <desc id="desc">米白与青绿色调的山峦占位图</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8eee7"/>
+      <stop offset="1" stop-color="#f6f2e8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="750" fill="url(#sky)"/>
+  <circle cx="880" cy="190" r="72" fill="#cba96d" opacity=".48"/>
+  <path d="M0 500 240 270l180 180 190-250 300 315 155-190 135 150v275H0Z" fill="#96aaa0" opacity=".72"/>
+  <path d="m0 570 205-150 190 145 235-205 260 200 160-115 150 105v200H0Z" fill="#456d61" opacity=".82"/>
+  <path d="M0 630q200-50 400 0t400 0 400 0v120H0Z" fill="#d9e0d4"/>
+  <text x="600" y="700" text-anchor="middle" fill="#52665d" font-family="sans-serif" font-size="30" letter-spacing="4">暂无实景图片</text>
+</svg>

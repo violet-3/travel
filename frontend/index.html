@@ -72,11 +72,19 @@
             </svg>
             <span class="label">复制摘要</span>
           </button>
-          <button class="pill-btn ghost-btn magnetic-elem" onclick="printGuide()" title="导出为 PDF 或打印">
+          <button class="pill-btn ghost-btn magnetic-elem" onclick="showGuideHistory()" title="查看本机保存的攻略历史">
+            <span aria-hidden="true">◷</span>
+            <span class="label">历史攻略</span>
+          </button>
+          <button class="pill-btn ghost-btn magnetic-elem" onclick="showExportOptions()" title="导出 Markdown、JSON 或打印">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
             </svg>
-            <span class="label">导出 / 打印</span>
+            <span class="label">导出</span>
+          </button>
+          <button class="pill-btn ghost-btn magnetic-elem" onclick="showModelSettings()" title="管理 LangChain 模型配置">
+            <span aria-hidden="true">⚙</span>
+            <span class="label">模型设置</span>
           </button>
           <button class="pill-btn primary-btn magnetic-elem" onclick="enterWorkspace()" title="进入功能工作台">
             <span class="label">进入功能页 ➔</span>
@@ -125,12 +133,62 @@
           </button>
         </div>
 
+        <div class="model-profile-picker">
+          <label for="model-profile-select">本次使用</label>
+          <select id="model-profile-select" aria-label="选择本次生成使用的模型配置">
+            <option value="">默认配置 / 环境变量</option>
+          </select>
+          <span id="model-profile-hint">未选择时使用已设为默认的配置</span>
+        </div>
+
+        <details class="travel-request-details" id="travel-request-details">
+          <summary>补充出行条件 <span>仅填写的项目会覆盖描述；硬约束会合并，遇到冲突会提示修改</span></summary>
+          <div class="travel-request-grid">
+            <label class="travel-field travel-field-wide">目的地（可选，填写后优先于描述）
+              <input id="travel-destinations" type="text" placeholder="例如：西安、洛阳" autocomplete="off">
+            </label>
+            <label class="travel-field">出发城市
+              <input id="travel-departure-city" type="text" placeholder="按描述识别" autocomplete="off">
+            </label>
+            <label class="travel-field">出发日期
+              <input id="travel-date" type="date">
+            </label>
+            <label class="travel-field">旅行天数
+              <input id="travel-days" type="number" min="1" max="60" step="1" placeholder="按描述识别">
+            </label>
+            <label class="travel-field">同行人数
+              <input id="travelers" type="number" min="1" max="50" step="1" placeholder="按描述识别">
+            </label>
+            <label class="travel-field">预算金额（元）
+              <input id="travel-budget" type="number" min="1" max="100000000" step="1" placeholder="按描述识别">
+            </label>
+            <label class="travel-field">预算口径
+              <select id="travel-budget-scope">
+                <option value="">按描述识别</option>
+                <option value="per_person">人均</option>
+                <option value="total">全体总额</option>
+              </select>
+            </label>
+            <label class="travel-field">旅行节奏
+              <select id="travel-pace">
+                <option value="">按描述识别</option>
+                <option value="轻松">轻松</option>
+                <option value="不紧不慢">不紧不慢</option>
+                <option value="特种兵">紧凑</option>
+              </select>
+            </label>
+            <label class="travel-field travel-field-wide">硬约束
+              <textarea id="travel-constraints" rows="2" placeholder="例如：不爬山；少走路；不能吃辣"></textarea>
+            </label>
+          </div>
+        </details>
+
         <!-- 内嵌式出行属性过滤器 (紧凑排列) -->
         <div class="search-quick-filters">
           <div class="filter-col">
             <span class="filter-label">天数</span>
             <div class="filter-pills" data-key="days">
-              <button class="f-pill active" data-val="3天">3天慢行</button>
+              <button class="f-pill" data-val="3天">3天慢行</button>
               <button class="f-pill" data-val="2天周末">2天周末</button>
               <button class="f-pill" data-val="5天深度">5天深度</button>
               <button class="f-pill" data-val="7天长假">7天长假</button>
@@ -140,7 +198,7 @@
           <div class="filter-col">
             <span class="filter-label">偏好</span>
             <div class="filter-pills" data-key="theme">
-              <button class="f-pill active" data-val="人文历史">人文古迹</button>
+              <button class="f-pill" data-val="人文历史">人文古迹</button>
               <button class="f-pill" data-val="山水避世">山水避世</button>
               <button class="f-pill" data-val="街巷寻味">街巷寻味</button>
               <button class="f-pill" data-val="风光摄影">风光摄影</button>
@@ -177,7 +235,7 @@
             <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
           </svg>
         </button>
-        <div class="gateway-hint-text">点击进入包含 8 大维度的互动路线画报 · 支持高德全线一键导航</div>
+        <div class="gateway-hint-text">点击进入包含 9 大维度的互动路线画报 · 支持高德全线一键导航</div>
       </div>
     </div>
   </section>
@@ -186,7 +244,7 @@
        STAGE 2: 深度功能页工作台 (Functional Guide Workspace)
        ═══════════════════════════════════════════ -->
   <section id="workspace-section" class="workspace-section">
-    <!-- 悬浮毛玻璃导航条 (切换 8 个篇章 + 返回主屏入口) -->
+    <!-- 悬浮毛玻璃导航条 (切换 9 个篇章 + 返回主屏入口) -->
     <nav class="nav-bar-container" id="navbar-container">
       <div class="nav-bar-inner">
         <!-- 返回开场主屏按键 -->
@@ -245,13 +303,174 @@
         <span class="step-sep">›</span>
         <span class="step-dot" id="st-compile">编排成卷</span>
       </div>
+      <button type="button" class="pill-btn ghost-btn cancel-generation-btn" onclick="cancelGeneration()">停止生成</button>
     </div>
   </div>
 
   <!-- ── 浮动提示 Toast ── -->
   <div id="toast" class="toast"></div>
 
+  <dialog id="model-settings-dialog" class="model-settings-dialog" aria-labelledby="model-settings-title">
+    <div class="model-settings-shell">
+      <header class="model-settings-header">
+        <div>
+          <p class="model-settings-kicker">LANGCHAIN · MODEL PROFILES</p>
+          <h2 id="model-settings-title">模型与服务设置</h2>
+          <p>模型配置通过 LangChain 调用。模型密钥和高德 Web 服务密钥保存在系统凭据库；浏览器地图 Key 与 JS 安全码只用于加载高德 JS SDK。</p>
+        </div>
+        <button class="settings-close-btn" type="button" onclick="closeModelSettings()" aria-label="关闭设置">×</button>
+      </header>
+
+      <div id="model-credential-status" class="model-credential-status" role="status"></div>
+      <div id="model-profile-list" class="model-profile-list" aria-live="polite"></div>
+
+      <section class="model-profile-editor" aria-labelledby="model-profile-form-title">
+        <div class="model-editor-heading">
+          <div>
+            <p class="model-settings-kicker">PROFILE</p>
+            <h3 id="model-profile-form-title">新建配置</h3>
+          </div>
+          <button class="settings-text-btn" type="button" onclick="resetModelProfileForm()">新建</button>
+        </div>
+        <form id="model-profile-form" autocomplete="off">
+          <input type="hidden" id="model-profile-id">
+          <label>配置名称<input id="model-profile-name" name="name" required maxlength="80" placeholder="例如：旅行规划主模型"></label>
+          <label>服务商预设
+            <select id="model-profile-provider" name="provider">
+              <option value="custom">自定义 · OpenAI 兼容</option>
+              <option value="deepseek">DeepSeek</option>
+              <option value="qwen">通义千问 / DashScope</option>
+              <option value="glm">智谱 GLM</option>
+              <option value="moonshot">Moonshot / Kimi</option>
+              <option value="doubao">豆包 / 火山方舟</option>
+              <option value="anthropic">Anthropic Claude</option>
+              <option value="gemini">Google Gemini</option>
+            </select>
+          </label>
+          <label>接口协议
+            <select id="model-profile-protocol" name="protocol">
+              <option value="openai_compatible">OpenAI 兼容协议</option>
+              <option value="anthropic">Anthropic 原生协议</option>
+              <option value="google_genai">Google GenAI 原生协议</option>
+            </select>
+          </label>
+          <label>接口地址<input id="model-profile-url" name="base_url" required type="url" value="http://127.0.0.1:15721/v1" placeholder="https://api.example.com/v1"></label>
+          <label>模型名称<input id="model-profile-model" name="model" required value="deepseek-v4-flash" placeholder="填写服务商提供的模型 ID"><small>模型 ID 可手动填写；不依赖服务商提供模型列表。预设值不代表已验证或仍可用。</small></label>
+          <label>API Key<input id="model-profile-key" name="api_key" type="password" autocomplete="new-password" placeholder="新建时填写；编辑时留空表示保留现有密钥"></label>
+          <div class="model-settings-grid">
+            <label>温度<input id="model-profile-temperature" name="temperature" type="number" min="0" max="2" step="0.1" placeholder="自动 / 留空"></label>
+            <label>超时（秒）<input id="model-profile-timeout" name="timeout" type="number" min="1" max="300" step="1" value="60"></label>
+            <label>最大重试<input id="model-profile-retries" name="max_retries" type="number" min="0" max="5" step="1" value="1"></label>
+            <label>最大输出 Token<input id="model-profile-max-tokens" name="max_tokens" type="number" min="1" max="131072" step="1" value="8192"></label>
+          </div>
+          <label>结构化输出方式
+            <select id="model-profile-structured" name="structured_output_method">
+              <option value="function_calling">Function calling</option>
+              <option value="json_schema">JSON Schema</option>
+              <option value="json_mode">JSON mode</option>
+              <option value="strict_json_text">严格 JSON 文本 + Pydantic 校验</option>
+            </select>
+          </label>
+          <p class="model-diagnostic-notice">点击连接或结构化能力测试按钮即发送短请求，可能产生少量费用。保存和读取配置不会调用模型。</p>
+          <label class="model-checkbox-row"><input id="model-profile-session-only" type="checkbox"><span>仅本次运行使用密钥，关闭服务后需要重新填写</span></label>
+          <label class="model-checkbox-row"><input id="model-profile-make-default" type="checkbox"><span>设为默认配置</span></label>
+          <div class="model-form-actions">
+            <button class="pill-btn primary-btn" type="submit">保存配置</button>
+            <button class="pill-btn ghost-btn" type="button" onclick="closeModelSettings()">完成</button>
+          </div>
+        </form>
+        <p id="model-profile-form-message" class="model-form-message" role="status"></p>
+      </section>
+
+      <section class="model-profile-editor amap-settings-editor" aria-labelledby="amap-settings-title">
+        <div class="model-editor-heading">
+          <div>
+            <p class="model-settings-kicker">AMAP · LOCATION SERVICES</p>
+            <h3 id="amap-settings-title">高德地图、POI 与天气</h3>
+          </div>
+        </div>
+        <p class="model-diagnostic-notice">四项配置相互独立。保存值不会回显；留空会保留已保存值。浏览器 JS Key 与安全码会发送给地图 SDK，Web 服务 Key 与签名密钥只留在服务端。</p>
+        <div id="amap-settings-status" class="model-credential-status" role="status">正在读取高德服务配置…</div>
+        <form id="amap-settings-form" autocomplete="off" onsubmit="saveAmapSettings(event)">
+          <label>浏览器 JS API Key<input id="amap-js-key" name="js_api_key" type="password" autocomplete="new-password" placeholder="留空以保留当前值"></label>
+          <label>浏览器 JS 安全码<input id="amap-js-security-code" name="js_security_code" type="password" autocomplete="new-password" placeholder="留空以保留当前值"></label>
+          <label>Web 服务 Key（POI / 天气）<input id="amap-web-key" name="web_service_key" type="password" autocomplete="new-password" placeholder="留空以保留当前值"></label>
+          <label>Web 服务签名密钥<input id="amap-web-secret" name="web_service_secret" type="password" autocomplete="new-password" placeholder="留空以保留当前值"></label>
+          <div class="model-form-actions">
+            <button class="pill-btn primary-btn" type="submit">保存高德配置</button>
+            <button class="pill-btn ghost-btn" type="button" onclick="clearAmapSettings()">清除本地配置</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="model-profile-editor deepseek-search-editor" aria-labelledby="deepseek-search-title">
+        <div class="model-editor-heading">
+          <div>
+            <p class="model-settings-kicker">DEEPSEEK · WEB RESEARCH</p>
+            <h3 id="deepseek-search-title">景点网页资料与图片线索</h3>
+          </div>
+        </div>
+        <p class="model-diagnostic-notice">默认关闭。每个景点最多 1 次 Search 和 1 次 Fetch，最多检索 3 个景点；每个成功且非空请求按官方单价 ¥5 / 1000 次计费，本轮最多 6 次，约 ¥0.03。票价、来源机构及图片授权仍需自行核实。</p>
+        <div id="deepseek-search-status" class="model-credential-status" role="status">正在读取联网资料设置…</div>
+        <form id="deepseek-search-settings-form" autocomplete="off" onsubmit="saveDeepSeekSearchSettings(event)">
+          <label class="model-checkbox-row"><input id="deepseek-search-enabled" name="enabled" type="checkbox"><span>启用 DeepSeek Search/Fetch 网页补全</span></label>
+          <label>凭据来源
+            <select id="deepseek-search-auth-mode" name="auth_mode" onchange="toggleDeepSeekSearchAuthFields()">
+              <option value="profile">明确选择官方 DeepSeek 模型档案</option>
+              <option value="dedicated">独立 Search API Key</option>
+            </select>
+          </label>
+          <label id="deepseek-search-profile-row">官方 DeepSeek 模型档案
+            <select id="deepseek-search-profile" name="profile_id"><option value="">请选择已保存档案</option></select>
+            <small>仅显示 provider 为 DeepSeek、协议为 OpenAI 兼容且主机为 api.deepseek.com 的档案。不会自动使用当前生成档案。</small>
+          </label>
+          <label id="deepseek-search-base-row">Search 服务地址<input id="deepseek-search-base-url" name="base_url" type="url" value="https://api.deepseek.com" placeholder="https://api.deepseek.com"><small>代理地址需单独填写对应 Search Key；主机变化后必须重新填写密钥。也可用 DEEPSEEK_SEARCH_BASE_URL 环境变量覆盖。</small></label>
+          <label id="deepseek-search-key-row">独立 Search API Key<input id="deepseek-search-key" name="api_key" type="password" autocomplete="new-password" placeholder="留空保留已保存的密钥"></label>
+          <label class="model-checkbox-row"><input id="deepseek-search-session-only" type="checkbox"><span>仅本次运行使用新填写的密钥</span></label>
+          <p class="model-diagnostic-notice">网页正文会作为不可信来源展示，不会传给攻略生成模型。来源不匹配、没有价格或下载失败时，会保留待核实状态与安全链接。</p>
+          <div class="model-form-actions">
+            <button class="pill-btn primary-btn" type="submit">保存联网资料设置</button>
+            <button class="pill-btn ghost-btn" type="button" onclick="clearDeepSeekSearchSettings()">清除本地设置与独立密钥</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog id="guide-history-dialog" class="model-settings-dialog compact-app-dialog" aria-labelledby="guide-history-title">
+    <div class="model-settings-shell">
+      <header class="model-settings-header">
+        <div>
+          <p class="model-settings-kicker">LOCAL · GUIDE ARCHIVE</p>
+          <h2 id="guide-history-title">本机攻略历史</h2>
+          <p>最近生成的攻略保存在本机应用数据目录，最多保留 30 条。</p>
+        </div>
+        <button type="button" class="model-dialog-close" onclick="closeAppDialog('guide-history-dialog')" aria-label="关闭历史窗口">×</button>
+      </header>
+      <div id="guide-history-list" class="guide-history-list" aria-live="polite">正在读取历史…</div>
+    </div>
+  </dialog>
+
+  <dialog id="guide-export-dialog" class="model-settings-dialog compact-app-dialog" aria-labelledby="guide-export-title">
+    <div class="model-settings-shell">
+      <header class="model-settings-header">
+        <div>
+          <p class="model-settings-kicker">EXPORT · YOUR GUIDE</p>
+          <h2 id="guide-export-title">保存或打印攻略</h2>
+          <p>导出内容只包含攻略数据，不包含模型配置或 API 密钥。</p>
+        </div>
+        <button type="button" class="model-dialog-close" onclick="closeAppDialog('guide-export-dialog')" aria-label="关闭导出窗口">×</button>
+      </header>
+      <div class="guide-export-actions">
+        <button type="button" class="pill-btn primary-btn" onclick="exportGuideMarkdown()">下载 Markdown</button>
+        <button type="button" class="pill-btn ghost-btn" onclick="exportGuideJson()">下载 JSON</button>
+        <button type="button" class="pill-btn ghost-btn" onclick="printGuide()">打印 / 另存为 PDF</button>
+      </div>
+    </div>
+  </dialog>
+
   <!-- 高德 JS SDK 懒加载 -->
+  <script src="/js/generation_stream.js"></script>
   <script src="/js/app.js"></script>
 </body>
 </html>
